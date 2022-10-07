@@ -10,10 +10,11 @@ import (
 )
 
 func getCliArgs() (string, []string) {
-	var apiToken, repoListString string
+	var apiToken, repoListString, githubApiBase string
 
 	flag.StringVar(&apiToken, "t", "", "API token")
 	flag.StringVar(&repoListString, "r", "", "Comma separated list of repos")
+	flag.StringVar(&githubApiBase, "g", "https://api.github.com/", "URL for Github's base v3 api")
 	flag.Parse()
 
 	repoList := strings.Split(repoListString, ",")
@@ -39,7 +40,7 @@ func validateCliArgs(apiToken string, repoList []string) bool {
 }
 
 func main() {
-	apiToken, repoList := getCliArgs()
+	apiToken, repoList, githubApiBase := getCliArgs()
 	errors := validateCliArgs(apiToken, repoList)
 
 	if errors {

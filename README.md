@@ -1,5 +1,7 @@
 # Iolaus
 
+Tool to help you tame the Hydra that is dependency PRs.
+
 ## Usage
 
 Drop into a docker container to run this script:
