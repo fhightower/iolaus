@@ -9,24 +9,24 @@ import (
 	"strings"
 )
 
-func getCliArgs() (string, []string) {
-	var apiToken, repoListString, githubApiBase string
+func getCliArgs() (string, string, []string) {
+	var apiToken, githubApiBase, prListString string
 
 	flag.StringVar(&apiToken, "t", "", "API token")
-	flag.StringVar(&repoListString, "r", "", "Comma separated list of repos")
 	flag.StringVar(&githubApiBase, "g", "https://api.github.com/", "URL for Github's base v3 api")
+	flag.StringVar(&prListString, "prs", "", "Comma separated list of PRs")
 	flag.Parse()
 
-	repoList := strings.Split(repoListString, ",")
+	prList := strings.Split(prListString, ",")
 
-	return apiToken, repoList
+	return apiToken, githubApiBase, prList
 }
 
-func validateCliArgs(apiToken string, repoList []string) bool {
+func validateCliArgs(apiToken string, prList []string) bool {
 	errors := false
 
-	// todo: this does not work... repoList has a length of 1 even when no repos are provided... look into why this is
-	if len(repoList) == 0 {
+	// todo: this does not work... prList has a length of 1 even when no repos are provided... look into why this is
+	if len(prList) == 0 {
 		errors = true
 		fmt.Println("Please provide repos to parse")
 	}
@@ -40,8 +40,8 @@ func validateCliArgs(apiToken string, repoList []string) bool {
 }
 
 func main() {
-	apiToken, repoList, githubApiBase := getCliArgs()
-	errors := validateCliArgs(apiToken, repoList)
+	apiToken, githubApiBase, prList := getCliArgs()
+	errors := validateCliArgs(apiToken, prList)
 
 	if errors {
 		return
@@ -49,6 +49,9 @@ func main() {
 
 	// todo: this is just for testing...
 	return
+
+	// todo: use this
+	fmt.Println(githubApiBase)
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
