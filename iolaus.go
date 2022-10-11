@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+type PR struct {
+	owner  string
+	repo   string
+	number int
+}
+
 func getCliArgs() (string, []string) {
 	var apiToken, prListString string
 
@@ -39,19 +45,26 @@ func validateCliArgs(apiToken string, prList []string) bool {
 	return errors
 }
 
+func processPRs(prList []string) []PR {
+	var cleanedPRList []PR
+	for _, v := range prList {
+		// todo: process PRs here...
+		owner := "fhightower"
+		repo := "ioc-finder"
+		number := 269
+		cleanedPRList = append(cleanedPRList, PR{owner, repo, number})
+	}
+	return cleanedPRList
+}
+
 func main() {
 	apiToken, prList := getCliArgs()
 	errors := validateCliArgs(apiToken, prList)
+	prs := processPRs(prList)
 
 	if errors {
 		return
 	}
-
-	// todo: this is just for testing...
-	return
-
-	// todo: use this
-	fmt.Println(githubApiBase)
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -60,8 +73,11 @@ func main() {
 	tc := oauth2.NewClient(ctx, ts)
 	ghClient := github.NewClient(tc)
 
-	// list all repositories for the authenticated user
-	repos, _, err := ghClient.Repositories.List(ctx, "", nil)
-	fmt.Println(repos)
-	fmt.Println(err)
+	for _, pr := range prs {
+		pr, _, err := ghClient.PullRequests.Get(ctx, pr.owner, pr.repo, pr.number)
+		fmt.Println(pr)
+		fmt.Println(err)
+	}
+	// todo: this is just for testing...
+	return
 }
