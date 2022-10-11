@@ -9,17 +9,17 @@ import (
 	"strings"
 )
 
-func getCliArgs() (string, string, []string) {
-	var apiToken, githubApiBase, prListString string
+func getCliArgs() (string, []string) {
+	var apiToken, prListString string
 
 	flag.StringVar(&apiToken, "t", "", "API token")
-	flag.StringVar(&githubApiBase, "g", "https://api.github.com/", "URL for Github's base v3 api")
+	// flag.StringVar(&githubApiBase, "g", "https://api.github.com/", "URL for Github's base v3 api")
 	flag.StringVar(&prListString, "prs", "", "Comma separated list of PRs")
 	flag.Parse()
 
 	prList := strings.Split(prListString, ",")
 
-	return apiToken, githubApiBase, prList
+	return apiToken, prList
 }
 
 func validateCliArgs(apiToken string, prList []string) bool {
@@ -28,7 +28,7 @@ func validateCliArgs(apiToken string, prList []string) bool {
 	// todo: this does not work... prList has a length of 1 even when no repos are provided... look into why this is
 	if len(prList) == 0 {
 		errors = true
-		fmt.Println("Please provide repos to parse")
+		fmt.Println("Please provide a comma separated list of PRs to approve")
 	}
 
 	if apiToken == "" {
@@ -40,7 +40,7 @@ func validateCliArgs(apiToken string, prList []string) bool {
 }
 
 func main() {
-	apiToken, githubApiBase, prList := getCliArgs()
+	apiToken, prList := getCliArgs()
 	errors := validateCliArgs(apiToken, prList)
 
 	if errors {
