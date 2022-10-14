@@ -49,12 +49,23 @@ func processPRs(prList []string) []PR {
 	var cleanedPRList []PR
 	for _, v := range prList {
 		// todo: process PRs here...
-		owner := "fhightower"
-		repo := "ioc-finder"
-		number := 269
+		// owner := "fhightower"
+		// repo := "ioc-finder"
+		// number := 269
+		owner := "ioc-fang"
+		repo := "ioc-fanger"
+		number := 96
 		cleanedPRList = append(cleanedPRList, PR{owner, repo, number})
 	}
 	return cleanedPRList
+}
+
+func determineMergeableState(pr github.PullRequest) bool {
+	// there are no clear docs for mergableState, but here the possible values are enumerated here:
+	// https://github.com/octokit/octokit.net/issues/1763
+	// and there are docs for the graphql equivalent (named 'mergestatestatus') here:
+	// https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+	return pr.GetMergeableState() == "clean"
 }
 
 func main() {
@@ -74,10 +85,19 @@ func main() {
 	ghClient := github.NewClient(tc)
 
 	for _, pr := range prs {
-		pr, _, err := ghClient.PullRequests.Get(ctx, pr.owner, pr.repo, pr.number)
-		fmt.Println(pr)
-		fmt.Println(err)
+		thisPr, _, _ := ghClient.PullRequests.Get(ctx, pr.owner, pr.repo, pr.number)
+		canMerge := determineMergeableState(*thisPr)
+		if !canMerge {
+			fmt.Printf("PR %v cannot be merged... please check this PR\n", pr)
+			return
+		}
+		return
+		// todo make this a constant
+		prBody := "LGTM - this was automatically approved w/ [iolaus](https://github.com/fhightower/iolaus)"
+		prReview := &github.PullRequestReviewRequest{Event: github.String("APPROVE"), Body: &prBody}
+		review, _, errs := ghClient.PullRequests.CreateReview(ctx, pr.owner, pr.repo, pr.number, prReview)
+		// approval, _, err := ghClient.PullRequests.Merge(ctx, pr.owner, pr.repo, pr.number)
+		fmt.Println(review)
+		fmt.Println(errs)
 	}
-	// todo: this is just for testing...
-	return
 }
