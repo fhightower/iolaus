@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"strings"
+    "strconv"
 )
 
 type PR struct {
@@ -20,7 +21,7 @@ func getCliArgs() (string, []string) {
 
 	flag.StringVar(&apiToken, "t", "", "API token")
 	// flag.StringVar(&githubApiBase, "g", "https://api.github.com/", "URL for Github's base v3 api")
-	flag.StringVar(&prListString, "prs", "", "Comma separated list of PRs")
+	flag.StringVar(&prListString, "prs", "", "Comma separated list of PRs in the form: `{owner}/{repo}/pulls/{number}` (e.g. fhightower/ioc-finder/pull/271)")
 	flag.Parse()
 
 	prList := strings.Split(prListString, ",")
@@ -31,8 +32,7 @@ func getCliArgs() (string, []string) {
 func validateCliArgs(apiToken string, prList []string) bool {
 	errors := false
 
-	// todo: this does not work... prList has a length of 1 even when no repos are provided... look into why this is
-	if len(prList) == 0 {
+    if prList[0] == "" {
 		errors = true
 		fmt.Println("Please provide a comma separated list of PRs to approve")
 	}
@@ -48,13 +48,10 @@ func validateCliArgs(apiToken string, prList []string) bool {
 func processPRs(prList []string) []PR {
 	var cleanedPRList []PR
 	for _, v := range prList {
-		// todo: process PRs here...
-		// owner := "fhightower"
-		// repo := "ioc-finder"
-		// number := 269
-		owner := "ioc-fang"
-		repo := "ioc-fanger"
-		number := 96
+		eles := strings.Split(v, "/")
+		owner := eles[0]
+		repo := eles[1]
+		number, _ := strconv.Atoi(eles[3])
 		cleanedPRList = append(cleanedPRList, PR{owner, repo, number})
 	}
 	return cleanedPRList
@@ -71,11 +68,11 @@ func determineMergeableState(pr github.PullRequest) bool {
 func main() {
 	apiToken, prList := getCliArgs()
 	errors := validateCliArgs(apiToken, prList)
-	prs := processPRs(prList)
-
 	if errors {
 		return
 	}
+
+	prs := processPRs(prList)
 
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(
@@ -91,13 +88,20 @@ func main() {
 			fmt.Printf("PR %v cannot be merged... please check this PR\n", pr)
 			return
 		}
+		prBody := "🚀\n\n*(This PR was automatically approved and merged using [iolaus](https://github.com/fhightower/iolaus))*"
+		prReview := github.PullRequestReviewRequest{Event: github.String("APPROVE"), Body: &prBody}
+		_, _, errs := ghClient.PullRequests.CreateReview(ctx, pr.owner, pr.repo, pr.number, &prReview)
+		if errs != nil {
+			fmt.Println(errs)
+			return
+		}
+		mergeOptions := github.PullRequestOptions{MergeMethod: "squash"}
+		// the commit message is empty (""), so Github will use the default commit message
+		_, _, err := ghClient.PullRequests.Merge(ctx, pr.owner, pr.repo, pr.number, "", &mergeOptions)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		return
-		// todo make this a constant
-		prBody := "LGTM - this was automatically approved w/ [iolaus](https://github.com/fhightower/iolaus)"
-		prReview := &github.PullRequestReviewRequest{Event: github.String("APPROVE"), Body: &prBody}
-		review, _, errs := ghClient.PullRequests.CreateReview(ctx, pr.owner, pr.repo, pr.number, prReview)
-		// approval, _, err := ghClient.PullRequests.Merge(ctx, pr.owner, pr.repo, pr.number)
-		fmt.Println(review)
-		fmt.Println(errs)
 	}
 }
