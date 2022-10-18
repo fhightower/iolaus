@@ -17,6 +17,8 @@ docker-compose run --rm dev
 Then, run the script:
 
 ```
-go run iolaus.go
+go run iolaus.go -h
 ```
+
+You will need to provide some args to `iolaus.go`.
 
