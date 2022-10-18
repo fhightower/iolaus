@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
+	"strconv"
 	"strings"
-    "strconv"
 )
 
 type PR struct {
@@ -32,7 +32,7 @@ func getCliArgs() (string, []string) {
 func validateCliArgs(apiToken string, prList []string) bool {
 	errors := false
 
-    if prList[0] == "" {
+	if prList[0] == "" {
 		errors = true
 		fmt.Println("Please provide a comma separated list of PRs to approve")
 	}
